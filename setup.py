@@ -30,6 +30,8 @@ setuptools.setup(
     url='https://github.com/dave-shawley/readings',
     license='BSD',
     packages=['readings'],
+    package_data={'': ['*.css', '*.html', '*.js']},
+    include_package_data=True,
     install_requires=read_requirements('requirements.txt'),
     entry_points={'console_scripts': ['readings=readings.app:main']},
     classifiers=['Development Status :: 5 - Production/Stable',

@@ -1,0 +1,5 @@
+include Procfile
+include requirements.txt
+include runtime.txt
+include web.py
+recursive-include readings/static *.css *.html *.js

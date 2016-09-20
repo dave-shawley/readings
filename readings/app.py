@@ -1,6 +1,7 @@
 from urllib import parse
 import logging
 import os
+import pkg_resources
 
 from sprockets.mixins.mediatype import content, transcoders
 from tornado import web
@@ -19,7 +20,9 @@ class Application(web.Application):
         else:
             kwargs['cookie_secret'] = os.urandom(256)
 
-        kwargs.setdefault('static_path', 'static')
+        kwargs.setdefault(
+            'static_path',
+            pkg_resources.resource_filename('readings', 'static'))
         kwargs.setdefault('static_url_path', '/static')
         kwargs.setdefault('login_url', '/login')
         super(Application, self).__init__([
