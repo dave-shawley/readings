@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- vim: set ts=2 sw=2 sts=2 et: -->
+<html>
+
+<head lang="en">
+  <title>Read it?!</title>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <script data-main="/static/js/login.js" src="/static/js/lib/require-2.3.1.min.js" type="text/javascript"></script>
+</head>
+
+<body>
+  <form id="login" method="POST" action="/login" enctype="application/x-www-form-urlencoded"></form>
+  <table style="border-collapse:collapse">
+    <tr>
+      <td><label for="email">E-mail:</label></td>
+      <td><input form="login" id="email" name="email" type="email" placeholder="me@example.com"></td>
+    </tr>
+    <tr>
+      <td><label for="password">Password:</label></td>
+      <td><input id="password" name="password" type="password" autocomplete="current-password"></td>
+    </tr>
+  </table>
+  <input form="login" type="submit">
+  <input form="login" name="token" id="token" name="token" type="hidden">
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+.reading {
+  display: block;
+  padding-bottom: 10px;
+}
+.added {
+  float: right;
+  font-size: smaller;
+}
+.reading-link {
+  font-family: Georgia, Arial, sans-serif;
+  font-size: larger;
+}
+button {
+  font-size: larger;
+  padding: 5px;
+  margin-left: 10px;
+}
