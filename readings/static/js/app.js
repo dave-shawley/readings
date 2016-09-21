@@ -1,11 +1,12 @@
 require.config({
   paths: {
     "jquery": "lib/jquery-3.1.0.min",
+    "moment": "lib/moment-2.15.0.min",
     "transparency": "lib/transparency-0.11.0.min"
   }
 });
-require(["jquery", "transparency"],
-  function (jQuery, transparency) {
+require(["jquery", "moment", "transparency"],
+  function (jQuery, moment, transparency) {
     "use strict";
     jQuery.fn.render = transparency.jQueryPlugin;
     jQuery.ajax({
@@ -18,9 +19,9 @@ require(["jquery", "transparency"],
       } else {
         jQuery("#readings").render(data, {
           "added": {
-            "text": function() {
-              var parsed = new Date(this.added);
-              return "added (" + parsed.toDateString() + ")";
+            "text": function () {
+              var parsed = moment(this.added);
+              return "added " + parsed.fromNow();
             }
           },
           "link": {
