@@ -10,17 +10,17 @@
 
 <body>
   <form id="login" method="POST" action="/login" enctype="application/x-www-form-urlencoded"></form>
-  <table style="border-collapse:collapse">
+  <table style="border-collapse:collapse; margin-left: 50px; margin-top: 20px;">
     <tr>
       <td><label for="email">E-mail:</label></td>
-      <td><input form="login" id="email" name="email" type="email" placeholder="me@example.com"></td>
+      <td><input form="login" id="email" name="email" type="email" placeholder="me@example.com" width="30"></td>
     </tr>
     <tr>
       <td><label for="password">Password:</label></td>
-      <td><input id="password" name="password" type="password" autocomplete="current-password"></td>
+      <td><input id="password" name="password" type="password" autocomplete="current-password" width="30"></td>
     </tr>
+    <tr><td colspan="2"><button form="login" type="submit">Log in</button></td></tr>
   </table>
-  <input form="login" type="submit">
   <input form="login" name="token" id="token" name="token" type="hidden">
 </body>
 

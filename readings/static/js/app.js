@@ -11,30 +11,39 @@ require(["jquery", "transparency"],
     jQuery.ajax({
       "url": "/",
       "dataType": "json"
-    }).done(function(data, status, jqxhr) {
+    }).done(function (data) {
       data.redirect = data.redirect || "";
       if (data.redirect) {
         document.location.assign(data.redirect);
       } else {
-        $("#readings").render(data, {
-          "reading-link": {
-            "text": function() { return this.title; },
-            "href": function() { return this.href; }
-          },
+        jQuery("#readings").render(data, {
           "added": {
             "text": function() {
               var parsed = new Date(this.added);
               return "added (" + parsed.toDateString() + ")";
             }
+          },
+          "link": {
+            "href": function () {
+              return this.href;
+            },
+            "text": function () {
+              return "";
+            }
           }
         });
+        jQuery("li.reading").on("click", function (event) {
+          event.preventDefault();
+          window.open(this.href);
+        });
       }
-    }).fail(function(jqxhr, status, error) {
+    }).fail(function (jqxhr, status, error) {
       console.log('Failed to retrieve data');
       console.log(error);
     });
 
-    jQuery("#logout").on("click", function(event) {
+    jQuery("#logout").on("click", function (event) {
+      event.preventDefault();
       document.location.assign("/logout");
     });
   });
