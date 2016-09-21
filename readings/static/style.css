@@ -45,9 +45,11 @@
   font-size: smaller;
   color: gray;
 }
-label {
+.form-label {
   font-family: "Computer Modern Bright Semibold", Arial, sans-serif;
   font-size: larger;
+  display: inline-block;
+  width: 100px;
 }
 input {
   font-family: "Computer Modern Concrete", Arial, sans-serif;

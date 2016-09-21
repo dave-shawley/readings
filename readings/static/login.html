@@ -9,19 +9,20 @@
 </head>
 
 <body>
-  <form id="login" method="POST" action="/login" enctype="application/x-www-form-urlencoded"></form>
-  <table style="border-collapse:collapse; margin-left: 50px; margin-top: 20px;">
-    <tr>
-      <td><label for="email">E-mail:</label></td>
-      <td><input form="login" id="email" name="email" type="email" placeholder="me@example.com" width="30"></td>
-    </tr>
-    <tr>
-      <td><label for="password">Password:</label></td>
-      <td><input id="password" name="password" type="password" autocomplete="current-password" width="30"></td>
-    </tr>
-    <tr><td colspan="2"><button form="login" type="submit">Log in</button></td></tr>
-  </table>
-  <input form="login" name="token" id="token" name="token" type="hidden">
+  <form id="login" method="POST" action="/login" enctype="application/x-www-form-urlencoded">
+    <div>
+      <span class="form-label"><label for="email">E-mail:</label></span>
+      <input id="email" name="email" type="email" placeholder="me@example.com" width="30">
+    </div>
+    <div>
+      <span class="form-label"><label for="password">Password:</label></span>
+      <input id="password" name="password" type="password" autocomplete="current-password" placeholder="********" width="30">
+    </div>
+    <div>
+      <button type="submit">Log in</button>
+    </div>
+    <input name="token" id="token" name="token" type="hidden">
+  </form>
 </body>
 
 </html>
