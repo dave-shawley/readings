@@ -40,6 +40,11 @@
   font-size: larger;
   color: black;
 }
+.small-link {
+  font-family: "Computer Modern", "Times New Roman", serif;
+  font-size: smaller;
+  color: gray;
+}
 label {
   font-family: "Computer Modern Bright Semibold", Arial, sans-serif;
   font-size: larger;
