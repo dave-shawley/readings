@@ -86,7 +86,7 @@ def main():
         'incremental': False,
         'formatters': {
             'console': {
-                'format': '%(asctime)s %(levelname)-10s %(name)s: %(message)s'
+                'format': '%(levelname)-10s %(name)s: %(message)s'
             }
         },
         'handlers': {'console': {'class': 'logging.StreamHandler',
