@@ -1,3 +1,18 @@
+/* Font faces are .woff transformations of Knuth's Computer Modern font
+ * set.  I downloaded them from http://checkmyworking.com/cm-web-fonts/
+ */
+@font-face {
+  font-family: "Computer Modern";
+  src: url("/static/cmunrm.woff");
+}
+@font-face {
+  font-family: "Computer Modern Bright Semibold";
+  src: url("/static/cmunbsr.woff");
+}
+@font-face {
+  font-family: "Computer Modern Concrete";
+  src: url("/static/cmunorm.woff");
+}
 .reading {
   display: block;
   padding-bottom: 10px;
