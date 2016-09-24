@@ -11,14 +11,39 @@
           content="width=device-width, initial-scale=1.0, max-scale=1.0, user-scalable=0">
   </head>
   <body>
-    <div><button id="add-reading">+</button>
-         <button id="logout">Logout</button></div>
-    <ul id=readings>
-      <li class=reading data-bind="link">
-        <div class="reading-title" data-bind="title"></div>
-        <div class="small-link" data-bind="href"></div>
-        <div class="added" data-bind="added"></div>
-      </li>
-    </ul>
+
+    <div id="reading-panel">
+      <div><button id="add-reading">+</button>
+           <button id="logout">Logout</button></div>
+      <ul id=readings>
+        <li class=reading data-bind="link">
+          <div class="reading-title" data-bind="title"></div>
+          <div class="small-link" data-bind="href"></div>
+          <div class="added" data-bind="added"></div>
+        </li>
+      </ul>
+    </div>
+
+    <div id="click-blocker" class="hidden"></div>
+
+    <div id="add-panel" class="hidden">
+      <form id="add-form" method="POST" action="/"
+        enctype="application/x-www-form-urlencoded">
+        <div>
+          <span class="form-label"><label>Title</label></span>
+          <input id="add-title" name="title" placeholder="Title" required>
+        </div>
+        <div>
+          <span class="form-label"><label>URL</label></span>
+          <input id="add-url" name="url" placeholder="http://..."
+            autocomplete="no" type="url" required>
+        </div>
+        <div style="margin-top: 50px">
+          <button id="cancel-button" type="reset">Cancel</button>
+          <button id="add-button">Add It</button>
+        </div>
+      </form>
+    </div>
+
   </body>
 </html>

@@ -13,6 +13,7 @@
   font-family: "Computer Modern Concrete";
   src: url("/static/cmunorm.woff");
 }
+
 #readings {
   padding-left: 0;
   margin-left: 0;
@@ -55,11 +56,45 @@ input {
   font-family: "Computer Modern Concrete", Arial, sans-serif;
   font-size: larger;
 }
+input:valid {
+  border-color: inherit;
+}
+input:invalid {
+  box-shadow: 0 0 5px 1px red;
+}
+input:focus:invalid {
+  outline: none;
+}
 button {
   font-family: "Computer Modern Bright Semibold", Arial, sans-serif;
   font-size: larger;
   padding: 5px;
   margin-left: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+#add-panel {
+  z-index: 2;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  padding: 20px;
+  border: 2px darkblue solid;
+  background-color: azure;
+  font-family: "Computer Modern Bright Semibold", Arial, sans-serif;
+}
+
+#click-blocker {
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(250, 250, 250, 0.5);
 }
 
 @media only screen and (max-device-width: 1024px) {

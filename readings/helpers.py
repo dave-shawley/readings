@@ -3,7 +3,7 @@ import logging
 import json
 
 from motor import motor_tornado
-from tornado import gen, web
+from tornado import concurrent, gen, ioloop, web
 import pymongo.errors
 
 
@@ -22,25 +22,123 @@ class AJAXRedirectMixin(web.RequestHandler):
         if not hasattr(self, 'logger'):
             self.logger = logging.getLogger(__name__)
 
-    def redirect(self, url, permanent=False, status=None):
-        try:
-            xhr = self.request.headers['X-Requested-With']
-            if xhr.lower() == 'xmlhttprequest':
-                self.logger.debug('AJAXin redirect to %s', url)
-                self.set_status(200)
-                if hasattr(self, 'send_response'):
-                    self.send_response({'redirect': url, 'status': status})
-                else:
-                    self.set_header('Content-Type', 'application/json')
-                    self.write(json.dumps({'redirect': url,
-                                           'status': status}).encode('utf-8'))
-            return self.finish()
+    def is_ajax_request(self):
+        xhr = self.request.headers.get('X-Requested-With', '')
+        return xhr.lower() == 'xmlhttprequest'
 
-        except KeyError:
-            pass
+    def redirect(self, url, permanent=False, status=None):
+        if self.is_ajax_request():
+            self.logger.debug('AJAXin redirect to %s', url)
+            self.set_status(200)
+            if hasattr(self, 'send_response'):
+                self.send_response({'redirect': url, 'status': status})
+            else:
+                self.set_header('Content-Type', 'application/json')
+                self.write(json.dumps({'redirect': url,
+                                       'status': status}).encode('utf-8'))
+            return self.finish()
 
         super(AJAXRedirectMixin, self).redirect(url, permanent=permanent,
                                                 status=status)
+
+
+class MongoActor(object):
+
+    def __init__(self, db, collection):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.db = db
+        self.collection = collection
+        self.retry_count = 0
+
+    def action(self):
+        raise NotImplementedError
+
+    def on_complete(self, result):
+        raise NotImplementedError
+
+    @gen.coroutine
+    def perform_operation(self):
+        coro = self.action()
+        iol = ioloop.IOLoop.instance()
+        future = concurrent.TracebackFuture()
+
+        def on_future_complete(f):
+            exc = f.exception()
+            if exc is not None:
+                future.set_exception(exc)
+            else:
+                maybe_future = self.on_complete(f.result())
+                if concurrent.is_future(maybe_future):
+                    iol.add_future(maybe_future, on_future_complete)
+                else:
+                    future.set_result(maybe_future)
+
+        iol.add_future(coro, on_future_complete)
+        try:
+            res = yield future
+
+        except pymongo.errors.AutoReconnect as error:
+            if self.retry_count < 5:
+                self.logger.warning('mongo reconnecting, retrying operation, '
+                                    'attempt %d', self.retry_count)
+                res = yield self.perform_operation()
+            else:
+                self.logger.error('giving up on mongo connection - %r',
+                                  error)
+                raise error
+
+        raise gen.Return(res)
+
+
+class FindOne(MongoActor):
+
+    def __init__(self, db, collection, query_spec):
+        super(FindOne, self).__init__(db, collection)
+        self.query_spec = query_spec
+
+    def action(self):
+        return self.db[self.collection].find_one(self.query_spec)
+
+    def on_complete(self, result):
+        result_dict = dict(result)
+        if '_id' in result_dict and 'id' not in result_dict:
+            result_dict['id'] = str(result_dict['_id'])
+        return result_dict
+
+
+class FindMany(MongoActor):
+
+    def __init__(self, db, collection, query_spec, *sort_spec):
+        super(FindMany, self).__init__(db, collection)
+        self.query_spec = query_spec
+        self.sort_spec = sort_spec
+        self.cursor = None
+        self.results = []
+
+    def action(self):
+        self.cursor = self.db[self.collection].find(self.query_spec)
+        if self.sort_spec:
+            self.cursor = self.cursor.sort(*self.sort_spec)
+        return self.cursor.fetch_next
+
+    def on_complete(self, result):
+        if result:
+            self.results.append(self.cursor.next_object())
+            return self.cursor.fetch_next
+        return self.results
+
+
+class SaveDocument(MongoActor):
+
+    def __init__(self, db, collection, doc):
+        super(SaveDocument, self).__init__(db, collection)
+        self.doc = doc.copy()
+
+    def action(self):
+        return self.db[self.collection].save(self.doc)
+
+    def on_complete(self, result):
+        return str(result)
 
 
 class MongoClient(object):
@@ -55,58 +153,20 @@ class MongoClient(object):
         self.mongo = motor_tornado.MotorClient(dsn)
 
     @gen.coroutine
-    def find_one(self, collection, query_spec, **kwargs):
-        retry_count = kwargs.pop('retry_count', 0)
-        self.logger.debug('searching %s for %r (attempt %d)',
-                          collection, query_spec, retry_count)
-        db = self.mongo.readings
-        coll = db[collection]
-        try:
-            res = yield coll.find_one(query_spec)
-            if res:
-                doc = dict(res)
-                if '_id' in doc and 'id' not in doc:
-                    doc['id'] = str(doc['_id'])
-            else:
-                self.logger.debug('document not found')
-                doc = None
-
-        except pymongo.errors.AutoReconnect as error:
-            if retry_count < 5:
-                self.logger.warning('mongo reconnecting, retrying operation, '
-                                    'attempt %d', retry_count)
-                doc = yield self.find_one(collection, query_spec,
-                                          retry_count=retry_count+1)
-            else:
-                self.logger.error('giving up on mongo connection - %r',
-                                  error)
-                raise error
-
+    def find_one(self, collection, query_spec):
+        actor = FindOne(self.mongo.readings, collection, query_spec)
+        doc = yield actor.perform_operation()
         raise gen.Return(doc)
 
     @gen.coroutine
-    def find(self, collection, query_spec, *sort_spec, **kwargs):
-        retry_count = kwargs.pop('retry_count', 0)
-        db = self.mongo.readings
-        coll = db[collection]
-        try:
-            cursor = coll.find(query_spec)
-            if sort_spec:
-                cursor = cursor.sort(*sort_spec)
-            results = []
-            while (yield cursor.fetch_next):
-                doc = cursor.next_object()
-                results.append(doc)
-
-        except pymongo.errors.AutoReconnect as error:
-            if retry_count < 5:
-                self.logger.warning('mongo reconnecting, retrying operation, '
-                                    'attempt %d', retry_count)
-                results = yield self.find(collection, query_spec, sort_spec,
-                                          retry_count=retry_count+1)
-            else:
-                self.logger.error('giving up on mongo connection - %r',
-                                  error)
-                raise error
-
+    def find(self, collection, query_spec, *sort_spec):
+        actor = FindMany(self.mongo.readings, collection,
+                         query_spec, *sort_spec)
+        results = yield actor.perform_operation()
         raise gen.Return(results)
+
+    @gen.coroutine
+    def save(self, collection, doc):
+        actor = SaveDocument(self.mongo.readings, collection, doc)
+        doc_id = yield actor.perform_operation()
+        raise gen.Return(doc_id)

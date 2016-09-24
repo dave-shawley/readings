@@ -1,9 +1,12 @@
+import datetime
+
 from sprockets.http import mixins
 from sprockets.mixins.mediatype import content
 from tornado import concurrent, gen, web
 import bson.objectid
 import jwt.exceptions
 import pymongo
+import pytz
 
 from readings import helpers
 
@@ -104,14 +107,35 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
     @web.authenticated
     @gen.coroutine
     def get(self):
-        docs = yield self.mongo.find('readings',
-                                     {'user_id': self.current_user['id']},
-                                     'when', pymongo.DESCENDING)
-        readings = [{'link': self.reverse_url('reading', str(doc['_id'])),
-                     'href': doc['link'], 'title': doc['title'],
-                     'added': doc['when']}
-                    for doc in docs]
-        self.send_response(readings)
+        if self.is_ajax_request():
+            self.logger.debug('retrieving readings for %s',
+                              self.current_user['id'])
+            docs = yield self.mongo.find('readings',
+                                         {'user_id': self.current_user['id']},
+                                         'when', pymongo.DESCENDING)
+            readings = [{'link': self.reverse_url('reading', str(doc['_id'])),
+                         'href': doc['link'], 'title': doc['title'],
+                         'added': doc['when'].replace(tzinfo=pytz.utc)}
+                        for doc in docs]
+            self.send_response(readings)
+            self.finish()
+        else:
+            self.logger.debug('not an AJAX request, redirecting to index')
+            self.redirect(self.static_url('index.html'), status=303)
+
+    @web.authenticated
+    @gen.coroutine
+    def post(self):
+        body = self.get_request_body()
+        new_doc = {'user_id': self.current_user['id'],
+                   'title': body['title'],
+                   'link': body['url'],
+                   'when': datetime.datetime.utcnow()}
+
+        self.logger.debug('adding reading - %r', new_doc)
+        doc_id = yield self.mongo.save('readings', new_doc)
+        self.set_header('Location', self.reverse_url('reading', doc_id))
+        self.set_status(204)
         self.finish()
 
 

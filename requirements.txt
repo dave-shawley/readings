@@ -1,5 +1,6 @@
 motor
 PyJWT
+pytz
 sprockets.http
 sprockets.mixins.mediatype
 tornado
