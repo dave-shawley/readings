@@ -6,6 +6,7 @@ from tornado import concurrent, gen, web
 import bson.objectid
 import jwt.exceptions
 import pymongo
+import pytz
 
 from readings import helpers
 
@@ -114,7 +115,7 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
                                          'when', pymongo.DESCENDING)
             readings = [{'link': self.reverse_url('reading', str(doc['_id'])),
                          'href': doc['link'], 'title': doc['title'],
-                         'added': doc['when']}
+                         'added': doc['when'].replace(tzinfo=pytz.utc)}
                         for doc in docs]
             self.send_response(readings)
             self.finish()
