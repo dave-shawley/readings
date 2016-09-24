@@ -1,3 +1,5 @@
+import datetime
+
 from sprockets.http import mixins
 from sprockets.mixins.mediatype import content
 from tornado import concurrent, gen, web
@@ -105,6 +107,8 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
     @gen.coroutine
     def get(self):
         if self.is_ajax_request():
+            self.logger.debug('retrieving readings for %s',
+                              self.current_user['id'])
             docs = yield self.mongo.find('readings',
                                          {'user_id': self.current_user['id']},
                                          'when', pymongo.DESCENDING)
@@ -115,7 +119,23 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
             self.send_response(readings)
             self.finish()
         else:
+            self.logger.debug('not an AJAX request, redirecting to index')
             self.redirect(self.static_url('index.html'), status=303)
+
+    @web.authenticated
+    @gen.coroutine
+    def post(self):
+        body = self.get_request_body()
+        new_doc = {'user_id': self.current_user['id'],
+                   'title': body['title'],
+                   'link': body['url'],
+                   'when': datetime.datetime.utcnow()}
+
+        self.logger.debug('adding reading - %r', new_doc)
+        doc_id = yield self.mongo.save('readings', new_doc)
+        self.set_header('Location', self.reverse_url('reading', doc_id))
+        self.set_status(204)
+        self.finish()
 
 
 class ReadingHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,

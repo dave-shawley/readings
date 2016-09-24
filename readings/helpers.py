@@ -128,6 +128,19 @@ class FindMany(MongoActor):
         return self.results
 
 
+class SaveDocument(MongoActor):
+
+    def __init__(self, db, collection, doc):
+        super(SaveDocument, self).__init__(db, collection)
+        self.doc = doc.copy()
+
+    def action(self):
+        return self.db[self.collection].save(self.doc)
+
+    def on_complete(self, result):
+        return str(result)
+
+
 class MongoClient(object):
 
     def __init__(self, host, port, user, password, database):
@@ -151,3 +164,9 @@ class MongoClient(object):
                          query_spec, *sort_spec)
         results = yield actor.perform_operation()
         raise gen.Return(results)
+
+    @gen.coroutine
+    def save(self, collection, doc):
+        actor = SaveDocument(self.mongo.readings, collection, doc)
+        doc_id = yield actor.perform_operation()
+        raise gen.Return(doc_id)

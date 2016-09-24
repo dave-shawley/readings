@@ -47,4 +47,29 @@ require(["jquery", "moment", "transparency"],
       event.preventDefault();
       document.location.assign("/logout");
     });
+
+    jQuery("#add-reading").on("click", function () {
+      jQuery("#add-title").val("");
+      jQuery("#add-url").val("");
+      jQuery("#click-blocker").show();
+      jQuery("#add-panel").show();
+    });
+
+    jQuery("#add-button").on("click", function (event) {
+      event.preventDefault();
+
+      var title = document.getElementById("add-title"),
+        url = document.getElementById("add-url");
+      if (title.validity.valid && url.validity.valid) {
+        jQuery("#add-panel").hide();
+        jQuery("#click-blocker").hide();
+        jQuery("#add-form").submit();
+      }
+    });
+
+    jQuery("#cancel-button").on("click", function () {
+      jQuery("#add-panel").hide();
+      jQuery("#click-blocker").hide();
+    });
+
   });
