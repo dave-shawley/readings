@@ -104,15 +104,18 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
     @web.authenticated
     @gen.coroutine
     def get(self):
-        docs = yield self.mongo.find('readings',
-                                     {'user_id': self.current_user['id']},
-                                     'when', pymongo.DESCENDING)
-        readings = [{'link': self.reverse_url('reading', str(doc['_id'])),
-                     'href': doc['link'], 'title': doc['title'],
-                     'added': doc['when']}
-                    for doc in docs]
-        self.send_response(readings)
-        self.finish()
+        if self.is_ajax_request():
+            docs = yield self.mongo.find('readings',
+                                         {'user_id': self.current_user['id']},
+                                         'when', pymongo.DESCENDING)
+            readings = [{'link': self.reverse_url('reading', str(doc['_id'])),
+                         'href': doc['link'], 'title': doc['title'],
+                         'added': doc['when']}
+                        for doc in docs]
+            self.send_response(readings)
+            self.finish()
+        else:
+            self.redirect(self.static_url('index.html'), status=303)
 
 
 class ReadingHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,

@@ -22,22 +22,21 @@ class AJAXRedirectMixin(web.RequestHandler):
         if not hasattr(self, 'logger'):
             self.logger = logging.getLogger(__name__)
 
-    def redirect(self, url, permanent=False, status=None):
-        try:
-            xhr = self.request.headers['X-Requested-With']
-            if xhr.lower() == 'xmlhttprequest':
-                self.logger.debug('AJAXin redirect to %s', url)
-                self.set_status(200)
-                if hasattr(self, 'send_response'):
-                    self.send_response({'redirect': url, 'status': status})
-                else:
-                    self.set_header('Content-Type', 'application/json')
-                    self.write(json.dumps({'redirect': url,
-                                           'status': status}).encode('utf-8'))
-            return self.finish()
+    def is_ajax_request(self):
+        xhr = self.request.headers.get('X-Requested-With', '')
+        return xhr.lower() == 'xmlhttprequest'
 
-        except KeyError:
-            pass
+    def redirect(self, url, permanent=False, status=None):
+        if self.is_ajax_request():
+            self.logger.debug('AJAXin redirect to %s', url)
+            self.set_status(200)
+            if hasattr(self, 'send_response'):
+                self.send_response({'redirect': url, 'status': status})
+            else:
+                self.set_header('Content-Type', 'application/json')
+                self.write(json.dumps({'redirect': url,
+                                       'status': status}).encode('utf-8'))
+            return self.finish()
 
         super(AJAXRedirectMixin, self).redirect(url, permanent=permanent,
                                                 status=status)
