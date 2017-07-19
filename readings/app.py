@@ -30,7 +30,7 @@ class Application(web.Application):
                 web.url(r'/login', handlers.LoginHandler, name='login'),
                 web.url(r'/logout', handlers.LogoutHandler),
                 web.url(r'/(?P<reading_id>.*)', handlers.ReadingHandler,
-                        name='reading')
+                        name='reading'),
             ], **kwargs)
         content.set_default_content_type(self, 'application/json',
                                          encoding='utf-8')
