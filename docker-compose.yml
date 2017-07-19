@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  mongodb:
+    image: khezen/mongo:3-slim
+    environment:
+      AUTH: y
+      ADMIN_USER: readings
+      ADMIN_PWD: secret
+      DB_NAME: readings
+      DB_USER: readings
+      DB_PWD: secret
+    ports:
+      - 27017
+
+networks: {}
+
+volumes: {}
