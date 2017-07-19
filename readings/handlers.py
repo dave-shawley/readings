@@ -45,12 +45,50 @@ class LoginHandler(helpers.AbsoluteReverseUrlMixin, content.ContentMixin,
         self.mongo = self.application.mongo
 
     def get(self):
+        """
+        Retrieve the login page.
+
+        This endpoint returns a login page that contains the login
+        form, javascript implementation of JWT, and the CSRF token
+        required for login.
+
+        :statuscode 302: this endpoint should never fail since
+            it simply redirects to a static HTML+JS.
+
+        """
         self.logger.debug('using csrf %r', self.xsrf_token)
         self.set_cookie('csrf', self.xsrf_token)
         return self.redirect(self.static_url('login.html'))
 
     @gen.coroutine
     def post(self):
+        """
+        Try to login.
+
+        :<json str email: email address to login with.
+        :<json str token: generated `JWT`_ token.
+
+        The password is used as the secret to generate the JWT-encoded
+        token of the following payload object.
+
+        .. json:object:: JWT Payload
+
+          :property string iss: Identifes the issuer.  This is the URL
+            of the login page.
+          :property integer nbf: The earliest time at which this token
+            is valid.  Set this to "now".
+          :property integer exp: The latest time at which this token
+            is valid.  Usually something like "nbf + 300".
+          :property string csrf: The value of the "csrf" cookie.
+
+        :statuscode 303: a ``POST`` results in a *redirect* to either the
+            login page or the **list of readings**
+
+        :reqheader Content-Type: identifies the format of the login data.
+
+        .. _JWT: http://jwt.io/
+
+        """
         body = self.get_request_body()
 
         user_info = yield self.mongo.find_one('users',
@@ -90,6 +128,15 @@ class LoginHandler(helpers.AbsoluteReverseUrlMixin, content.ContentMixin,
 class LogoutHandler(web.RequestHandler):
 
     def get(self):
+        """
+        Simply log out.
+
+        This destroys the secure cookie and redirects you to
+        :http:get:`/login`.
+
+        :statuscode 302: redirects to the login page
+
+        """
         self.clear_cookie('user')
         self.redirect(self.reverse_url('login'))
 
@@ -106,6 +153,25 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
     @web.authenticated
     @gen.coroutine
     def get(self):
+        """
+        Retrieve a list of readings.
+
+        :>jsonarr str link: canonical link to this reading
+        :>jsonarr str href: external link to the reading content
+        :>jsonarr str added: date that this reading was added
+
+        Use this method to retrieve the list of readings as a JSON array.
+        It requires that you are already *authenticated*.  If you are not
+        authenticated, then you will be redirected to the login page.
+
+        :statuscode 200: the response includes the list of readings
+        :statuscode 302: you have not logged in.  The :http:header:`Location`
+            header will redirect to the login page.
+        :statuscode 303: the request is not an AJAX request.  The
+            :http:header:`Location` header will redirect to the root
+            page since that is probably what you wanted anyway.
+
+        """
         if self.is_ajax_request():
             self.logger.debug('retrieving readings for %s',
                               self.current_user['id'])
@@ -120,11 +186,25 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
             self.finish()
         else:
             self.logger.debug('not an AJAX request, redirecting to index')
+            self.logger.debug('headers: %r', dict(self.request.headers))
             self.redirect(self.static_url('index.html'), status=303)
 
     @web.authenticated
     @gen.coroutine
     def post(self):
+        """
+        Add something to the list.
+
+        :<jsonarr str title: title of the page/article
+        :<jsonarr str link: link to the page
+
+        :statuscode 204: the reading was added and is available by retrieving
+            the resource identified by the :http:header:`Location` header.
+        :statuscode 302: you have not logged in.  The :http:header:`Location`
+            header will redirect to the login page.
+        :resheader Location: the canonical location for the created reading.
+
+        """
         body = self.get_request_body()
         new_doc = {'user_id': self.current_user['id'],
                    'title': body['title'],
@@ -148,6 +228,17 @@ class ReadingHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
     @web.authenticated
     @gen.coroutine
     def get(self, reading_id):
+        """
+        Go to a specific reading.
+
+        :param str reading_id: the unique identifier of the reading to
+            jump to
+
+        :statuscode 302: redirects to the reading content or the login
+            page if you are not logged in
+        :resheader Location: the location of the reading content
+
+        """
         db = self.application.mongo.readings
         coll = db.readings
         cursor = coll.find({'user_id': self.current_user['id'],
