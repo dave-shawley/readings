@@ -81,11 +81,14 @@ class MongoActor(object):
             if self.retry_count < 5:
                 self.logger.warning('mongo reconnecting, retrying operation, '
                                     'attempt %d', self.retry_count)
+                self.retry_count += 1
                 res = yield self.perform_operation()
             else:
                 self.logger.error('giving up on mongo connection - %r',
                                   error)
                 raise error
+
+        self.retry_count = 0
 
         raise gen.Return(res)
 
