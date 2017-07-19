@@ -45,7 +45,6 @@ class LoginHandler(helpers.AbsoluteReverseUrlMixin, content.ContentMixin,
         self.mongo = self.application.mongo
 
     def get(self):
-        self.set_status(200)
         self.logger.debug('using csrf %r', self.xsrf_token)
         self.set_cookie('csrf', self.xsrf_token)
         return self.redirect(self.static_url('login.html'))
@@ -135,6 +134,8 @@ class ReadingsHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
         self.logger.debug('adding reading - %r', new_doc)
         doc_id = yield self.mongo.save('readings', new_doc)
         self.set_header('Location', self.reverse_url('reading', doc_id))
+        self.set_header('Access-Control-Allow-Origin', self.request.headers['Origin'])
+        self.set_header('Access-Control-Allow-Methods', 'GET')
         self.set_status(204)
         self.finish()
 
