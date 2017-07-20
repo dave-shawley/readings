@@ -9,10 +9,8 @@ require(["jquery", "moment", "transparency"],
   function (jQuery, moment, transparency) {
     "use strict";
     jQuery.fn.render = transparency.jQueryPlugin;
-    jQuery.ajax({
-      "url": "/",
-      "dataType": "json"
-    }).done(function (data) {
+
+    function renderList(data) {
       data.redirect = data.redirect || "";
       if (data.redirect) {
         document.location.assign(data.redirect);
@@ -38,10 +36,17 @@ require(["jquery", "moment", "transparency"],
           window.open(this.href);
         });
       }
-    }).fail(function (jqxhr, status, error) {
+    }
+
+    function showError(jqxhr, status, error) {
       console.log('Failed to retrieve data');
       console.log(error);
-    });
+    }
+
+    jQuery.ajax({
+      "url": "/",
+      "dataType": "json"
+    }).done(renderList).fail(showError);
 
     jQuery("#logout").on("click", function (event) {
       event.preventDefault();
@@ -63,7 +68,21 @@ require(["jquery", "moment", "transparency"],
       if (title.validity.valid && url.validity.valid) {
         jQuery("#add-panel").hide();
         jQuery("#click-blocker").hide();
-        jQuery("#add-form").submit();
+        jQuery.ajax({
+          "url": "/",
+          "method": "POST",
+          "data": jQuery("#add-form").serialize(),
+          "dataType": "json"
+        }).done(function() {
+          jQuery.ajax({
+            "url": "/",
+            "method": "GET",
+            "dataType": "json",
+            "crossDomain": true,
+            "xhrFields": {"withCredentials": false},
+            "headers": {"X-Requested-With": "XMLHTTPRequest"}
+          }).done(renderList).fail(showError);
+        });
       }
     });
 
