@@ -17,9 +17,12 @@
            <button id="logout">Logout</button></div>
       <ul id=readings>
         <li class=reading data-bind="link">
-          <div class="reading-title" data-bind="title"></div>
-          <div class="small-link" data-bind="href"></div>
-          <div class="added" data-bind="added"></div>
+          <div style="display: inline-block; width: 90%">
+            <span class="reading-title" style="display: block" data-bind="title"></span>
+            <span class="small-link" style="display: block" data-bind="href"></span>
+            <span class="added" style="display: block" data-bind="added"></span>
+          </div>
+          <button class="remove-reading hidden" style="float:right; clear:none">-</button>
         </li>
       </ul>
     </div>
@@ -44,6 +47,5 @@
         </div>
       </form>
     </div>
-
   </body>
 </html>
