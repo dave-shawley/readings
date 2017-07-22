@@ -13,6 +13,18 @@ services:
     ports:
       - 27017
 
+  readings:
+    build: .
+    environment:
+      DEBUG: 1
+      MONGODB_HOST: mongodb
+      MONGODB_USER: readings
+      MONGODB_PASSWORD: secret
+    ports:
+      - 80
+    depends_on:
+      - mongodb
+
 networks: {}
 
 volumes: {}

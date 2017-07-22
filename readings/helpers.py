@@ -103,7 +103,7 @@ class FindOne(MongoActor):
         return self.db[self.collection].find_one(self.query_spec)
 
     def on_complete(self, result):
-        result_dict = dict(result)
+        result_dict = dict(result or {})
         if '_id' in result_dict and 'id' not in result_dict:
             result_dict['id'] = str(result_dict['_id'])
         return result_dict

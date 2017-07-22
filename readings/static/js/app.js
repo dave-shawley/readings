@@ -11,7 +11,6 @@ require(["jquery", "moment", "transparency"],
     jQuery.fn.render = transparency.jQueryPlugin;
 
     function renderList(data) {
-      data.redirect = data.redirect || "";
       if (data.redirect) {
         document.location.assign(data.redirect);
       } else {
@@ -23,17 +22,39 @@ require(["jquery", "moment", "transparency"],
             }
           },
           "link": {
-            "href": function () {
+            "goto-reading": function () {
               return this.href;
+            },
+            "remove-reading": function () {
+              return this.link;
             },
             "text": function () {
               return "";
             }
           }
         });
-        jQuery("li.reading").on("click", function (event) {
+        jQuery("li.reading div").on("click", function (event) {
           event.preventDefault();
-          window.open(this.href);
+          window.open(this.parentElement["goto-reading"]);
+        });
+        jQuery("li.reading").mouseenter(function (event) {
+          $(this).children("button.remove-reading").show();
+        });
+        jQuery("li.reading").mouseleave(function (event) {
+          $(this).children("button.remove-reading").hide();
+        });
+        jQuery(".remove-reading").on("click", function (event) {
+          event.preventDefault();
+          jQuery.ajax({
+            "url": this.parentElement["remove-reading"],
+            "method": "DELETE"
+          }).done(function() {
+            jQuery.ajax({
+              "url": "/",
+              "method": "GET",
+              "dataType": "json"
+            }).done(renderList).fail(showError);
+          });
         });
       }
     }

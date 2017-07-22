@@ -239,10 +239,29 @@ class ReadingHandler(UserMixin, helpers.AbsoluteReverseUrlMixin,
         :resheader Location: the location of the reading content
 
         """
-        db = self.application.mongo.readings
+        db = self.application.mongo.mongo.readings
         coll = db.readings
         cursor = coll.find({'user_id': self.current_user['id'],
                             '_id': bson.objectid.ObjectId(reading_id)})
         yield cursor.fetch_next
         reading = cursor.next_object()
         self.redirect(reading['link'])
+
+    @web.authenticated
+    @gen.coroutine
+    def delete(self, reading_id):
+        """
+        Remove a reading.
+
+        :param str reading_id: the unique identifier of the reading
+            to remove
+
+        """
+        db = self.application.mongo.mongo.readings
+        result = yield db.readings.delete_one(
+            {'_id': bson.objectid.ObjectId(reading_id)})
+        if result.deleted_count:
+            self.set_status(204)
+        else:
+            self.set_status(404)
+        self.finish()
