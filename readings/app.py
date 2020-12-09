@@ -42,13 +42,17 @@ class Application(web.Application):
     @property
     def mongo(self):
         if self._mongo is None:
-            self._mongo = helpers.MongoClient(
-                user=os.environ.get('MONGODB_USER', 'readings'),
-                password=os.environ.get('MONGODB_PASSWORD', ''),
-                host=os.environ.get('MONGODB_HOST', '127.0.0.1'),
-                port=int(os.environ.get('MONGODB_PORT', '27017')),
-                database=os.environ.get('MONGODB_DATABASE', 'readings'),
-            )
+            try:
+                self._mongo = helpers.MongoClient(
+                    url=os.environ['MONGODB_URL'])
+            except KeyError:
+                self._mongo = helpers.MongoClient(
+                    user=os.environ.get('MONGODB_USER', 'readings'),
+                    password=os.environ.get('MONGODB_PASSWORD', ''),
+                    host=os.environ.get('MONGODB_HOST', '127.0.0.1'),
+                    port=int(os.environ.get('MONGODB_PORT', '27017')),
+                    database=os.environ.get('MONGODB_DATABASE', 'readings'),
+                )
         return self._mongo
 
 
