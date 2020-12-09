@@ -146,13 +146,17 @@ class SaveDocument(MongoActor):
 
 class MongoClient(object):
 
-    def __init__(self, host, port, user, password, database):
+    def __init__(self, host=None, port=None, user=None, password=None,
+                 database=None, url=None):
         super(MongoClient, self).__init__()
         self.logger = logging.getLogger(__name__)
-        dsn = 'mongodb://{user}:{password}@{host}:{port}/{database}'.format(
-            user=parse.quote(user, safe=''),
-            password=parse.quote(password, safe=''),
-            host=host, port=port, database=parse.quote(database, safe=''))
+        if url is not None:
+            dsn = url
+        else:
+            dsn = 'mongodb://{user}:{password}@{host}:{port}/{db}'.format(
+                user=parse.quote(user, safe=''),
+                password=parse.quote(password, safe=''),
+                host=host, port=port, db=parse.quote(database, safe=''))
         self.mongo = motor_tornado.MotorClient(dsn)
 
     @gen.coroutine
